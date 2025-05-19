@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Создать вопрос-ответ</h2>
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" name="status" value="review">На проверку</button>
+    <button type="submit" name="status" value="draft">Черновик</button>
+    <a href="{% url 'home' %}">Отмена</a>
+</form>
+{% endblock %}

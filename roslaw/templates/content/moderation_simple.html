@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Модерация публикаций</h1>
+    
+    <div class="alert alert-info mb-3">
+        Найдено элементов: <strong>{{ all_qa_items|length }}</strong>
+    </div>
+    
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Список публикаций на модерацию</h5>
+        </div>
+        <div class="card-body">
+            {% if all_qa_items %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Вопрос</th>
+                                <th>Статус</th>
+                                <th>Автор</th>
+                                <th>Создано</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in all_qa_items %}
+                            <tr>
+                                <td>{{ item.id }}</td>
+                                <td>{{ item.question|truncatechars:50 }}</td>
+                                <td><span class="badge badge-{% if item.status == 'pending' %}warning{% elif item.status == 'published' %}success{% else %}secondary{% endif %}">{{ item.status }}</span></td>
+                                <td>{{ item.author.username }}</td>
+                                <td>{{ item.created_at|date:"d.m.Y H:i" }}</td>
+                                <td>
+                                    <!-- Use the correct URL pattern that exists in your system -->
+                                    <a href="/moderation/{{ item.id }}/" class="btn btn-sm btn-primary">
+                                        <i class="fas fa-eye"></i> Просмотреть
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i> Публикаций на модерацию не найдено.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

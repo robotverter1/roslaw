@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+
+{% block title %}Мои вопрос-ответы{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Мои вопрос-ответы</h1>
+    
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card bg-success text-white">
+                <div class="card-body text-center">
+                    <h3>{{ published_count|default:0 }}</h3>
+                    <p class="mb-0">Опубликовано</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-warning text-dark">
+                <div class="card-body text-center">
+                    <h3>{{ in_review_count|default:0 }}</h3>
+                    <p class="mb-0">На проверке</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-danger text-white">
+                <div class="card-body text-center">
+                    <h3>{{ rejected_count|default:0 }}</h3>
+                    <p class="mb-0">Отклонено</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Все вопрос-ответы</h5>
+        </div>
+        <div class="card-body">
+            {% if posts %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Вопрос</th>
+                                <th>Статус</th>
+                                <th>Дата создания</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for post in posts %}
+                                <tr>
+                                    <td>{{ post.question|truncatechars:60 }}</td>
+                                    <td>
+                                        <span class="badge bg-{% if post.status == post.STATUS_PUBLISHED %}success{% elif post.status == post.STATUS_IN_REVIEW %}warning{% elif post.status == post.STATUS_REJECTED %}danger{% else %}secondary{% endif %}">
+                                            {% if post.status == post.STATUS_PUBLISHED %}Опубликовано{% elif post.status == post.STATUS_IN_REVIEW %}На проверке{% elif post.status == post.STATUS_REJECTED %}Отклонено{% else %}Черновик{% endif %}
+                                        </span>
+                                    </td>
+                                    <td>{{ post.created_at|date:"d.m.Y" }}</td>
+                                    <td>
+                                        <a href="{% url 'content:qa_detail' pk=post.id %}" class="btn btn-sm btn-primary">Просмотр</a>
+                                        {% if post.status != post.STATUS_IN_REVIEW %}
+                                            <a href="{% url 'content:qa_edit' pk=post.id %}" class="btn btn-sm btn-outline-secondary">Редактировать</a>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    У вас пока нет созданных вопрос-ответов.
+                    <a href="{% url 'content:qa_create' %}" class="alert-link">Создать новый?</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="mt-3 text-center">
+        <a href="{% url 'content:qa_create' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Создать новый вопрос-ответ
+        </a>
+        <a href="{% url 'accounts:profile' %}" class="btn btn-secondary ms-2">
+            <i class="bi bi-arrow-left"></i> Вернуться в профиль
+        </a>
+    </div>
+</div>
+{% endblock %}

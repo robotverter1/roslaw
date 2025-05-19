@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'content:dashboard' %}">Главная</a></li>
+                    {% if selected_chapter %}
+                    <li class="breadcrumb-item">
+                        <a href="{% url 'content:dashboard' %}?chapter={{ selected_chapter.id }}">
+                            {{ selected_chapter.title }}
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% if selected_section %}
+                    <li class="breadcrumb-item">
+                        <a href="{% url 'content:dashboard' %}?chapter={{ selected_chapter.id }}&section={{ selected_section.id }}">
+                            {{ selected_section.title }}
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% if selected_subsection %}
+                    <li class="breadcrumb-item">
+                        <a href="{% url 'content:dashboard' %}?chapter={{ selected_chapter.id }}&section={{ selected_section.id }}&subsection={{ selected_subsection.id }}">
+                            {{ selected_subsection.title }}
+                        </a>
+                    </li>
+                    {% endif %}
+                    <li class="breadcrumb-item active" aria-current="page">{{ qa.question }}</li>
+                </ol>
+            </nav>
+
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">{{ qa.question }}</h5>
+                    <div>
+                        {% if qa.status == 'published' %}
+                            <span class="badge badge-success">Опубликовано</span>
+                        {% elif qa.status == 'review' %}
+                            <span class="badge badge-warning">На проверке</span>
+                        {% elif qa.status == 'draft' %}
+                            <span class="badge badge-secondary">Черновик</span>
+                        {% elif qa.status == 'rejected' %}
+                            <span class="badge badge-danger">Отклонено</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if need_moderation %}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i> Этот материал находится на проверке
+                    </div>
+                    {% endif %}
+                    
+                    <div class="qa-answer">
+                        {{ qa.answer|safe }}
+                    </div>
+                    
+                    {% if references %}
+                    <div class="mt-4">
+                        <h6>Ссылки:</h6>
+                        <ul>
+                            {% for ref in references %}
+                            <li><a href="{{ ref.url }}" target="_blank">{{ ref.description|default:ref.url }}</a></li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer text-muted d-flex justify-content-between">
+                    <div>
+                        Автор: {{ qa.author.get_full_name|default:qa.author.username }}
+                    </div>
+                    <div>
+                        Создано: {{ qa.created_at|date:"d.m.Y" }}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="d-flex justify-content-between">
+                <div>
+                    {% if can_edit %}
+                    <a href="{% url 'content:qa_edit' qa.id %}" class="btn btn-primary mr-2">
+                        <i class="fas fa-edit"></i> Редактировать
+                    </a>
+                    {% endif %}
+                    
+                    {% if is_author and qa.status == 'draft' %}
+                    <form method="post" action="{% url 'content:qa_send_to_review' qa.id %}" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-paper-plane"></i> Отправить на проверку
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+                
+                {% if is_moderator and need_moderation %}
+                <div>
+                    <form method="post" action="{% url 'content:qa_review_action' qa.id %}" class="d-inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="approve">
+                        <button type="submit" class="btn btn-success mr-2">
+                            <i class="fas fa-check"></i> Одобрить
+                        </button>
+                    </form>
+                    <form method="post" action="{% url 'content:qa_review_action' qa.id %}" class="d-inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="reject">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-times"></i> Отклонить
+                        </button>
+                    </form>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

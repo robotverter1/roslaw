@@ -1,0 +1,374 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}РосЛоуБот{% endblock %}
+
+{% block content %}
+<!-- Hidden div to pass data to JavaScript -->
+<div id="content-data"
+    data-active-chapter="{{ active_chapter|default:'null' }}"
+    data-active-section="{{ active_section|default:'null' }}"
+    data-active-subsection="{{ active_subsection|default:'null' }}"
+    data-dashboard-url="{% url 'content:dashboard' %}">
+</div>
+
+<div class="row">
+    <!-- User sidebar -->
+    <div class="col-md-3 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-body text-center">
+                <img src="{% static 'img/default_profile.jpg' %}" alt="{{ user.get_full_name }}"
+                    class="img-fluid rounded mb-3" style="max-width: 150px;">
+                <h4>{{ user.last_name }}</h4>
+                <h5>{{ user.first_name }}</h5>
+                <div class="text-muted">Член МС при УПК Ярославской области</div>
+
+                <hr>
+
+                <div class="text-start mt-3">
+                    <div class="mb-2">Статей опубликовано: <strong>{{ published_count }}</strong></div>
+                    <div class="mb-2">Статей на модерации: <strong>{{ in_review_count }}</strong></div>
+                    <div class="mb-2">Статей на доработке: <strong>{{ rejected_count }}</strong></div>
+                    <hr>
+                    <div class="mb-2">На сайте с {{ user.date_joined|date:"d F Y" }} года</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Content hierarchy - Pure Bootstrap -->
+    <div class="col-md-9">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Структура контента</h5>
+                <button class="btn btn-sm btn-light add-chapter">
+                    <i class="bi bi-plus-circle"></i> Создать главу
+                </button>
+            </div>
+            <div class="card-body">
+                <!-- Standard Bootstrap Accordion -->
+                <div class="accordion" id="chaptersAccordion">
+                    {% for chapter in chapters %}
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="chapter-heading-{{ chapter.id }}">
+                            <button class="accordion-button bg-light {% if chapter.id != active_chapter %}collapsed{% endif %}" 
+                                    type="button" 
+                                    data-bs-toggle="collapse" 
+                                    data-bs-target="#chapter-collapse-{{ chapter.id }}" 
+                                    aria-expanded="{% if chapter.id == active_chapter %}true{% else %}false{% endif %}" 
+                                    aria-controls="chapter-collapse-{{ chapter.id }}"
+                                    data-id="{{ chapter.id }}">
+                                <div class="d-flex justify-content-between align-items-center w-100 me-3">
+                                    <span><small class="text-muted me-2">Глава:</small>{{ chapter.title }}</span>
+                                    <span class="badge bg-primary rounded-pill ms-2">{{ chapter.sections.count }}</span>
+                                </div>
+                            </button>
+                        </h2>
+                        <div id="chapter-collapse-{{ chapter.id }}" 
+                             class="accordion-collapse collapse {% if chapter.id == active_chapter %}show{% endif %}" 
+                             aria-labelledby="chapter-heading-{{ chapter.id }}" 
+                             data-bs-parent="#chaptersAccordion">
+                            <div class="accordion-body">
+                                <!-- Nested accordion for sections -->
+                                <div class="accordion accordion-flush" id="sectionsAccordion-{{ chapter.id }}">
+                                    {% for section in chapter.sections.all %}
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header" id="section-heading-{{ section.id }}">
+                                            <button class="accordion-button {% if section.id != active_section %}collapsed{% endif %}" 
+                                                    type="button" 
+                                                    data-bs-toggle="collapse" 
+                                                    data-bs-target="#section-collapse-{{ section.id }}" 
+                                                    aria-expanded="{% if section.id == active_section %}true{% else %}false{% endif %}" 
+                                                    aria-controls="section-collapse-{{ section.id }}"
+                                                    data-id="{{ section.id }}">
+                                                <div class="d-flex justify-content-between align-items-center w-100 me-3">
+                                                    <span><small class="text-muted me-2">Раздел:</small>{{ section.title }}</span>
+                                                    <span class="badge bg-success rounded-pill ms-2">{{ section.subsections.count }}</span>
+                                                </div>
+                                            </button>
+                                        </h2>
+                                        <div id="section-collapse-{{ section.id }}" 
+                                             class="accordion-collapse collapse {% if section.id == active_section %}show{% endif %}" 
+                                             aria-labelledby="section-heading-{{ section.id }}" 
+                                             data-bs-parent="#sectionsAccordion-{{ chapter.id }}">
+                                            <div class="accordion-body">
+                                                <div class="accordion accordion-flush" id="subsectionsAccordion-{{ section.id }}">
+                                                    {% for subsection in section.subsections.all %}
+                                                    <div class="accordion-item">
+                                                        <h2 class="accordion-header" id="subsection-heading-{{ subsection.id }}">
+                                                            <button class="accordion-button {% if subsection.id != active_subsection %}collapsed{% endif %}" 
+                                                                    type="button" 
+                                                                    data-bs-toggle="collapse" 
+                                                                    data-bs-target="#subsection-collapse-{{ subsection.id }}" 
+                                                                    aria-expanded="{% if subsection.id == active_subsection %}true{% else %}false{% endif %}" 
+                                                                    aria-controls="subsection-collapse-{{ subsection.id }}"
+                                                                    data-id="{{ subsection.id }}">
+                                                                <div class="d-flex justify-content-between align-items-center w-100 me-3">
+                                                                    <span><small class="text-muted me-2">Подраздел:</small>{{ subsection.title }}</span>
+                                                                    <span class="badge bg-warning rounded-pill ms-2">{{ subsection.qa_items.count }}</span>
+                                                                </div>
+                                                            </button>
+                                                        </h2>
+                                                        <div id="subsection-collapse-{{ subsection.id }}" 
+                                                             class="accordion-collapse collapse {% if subsection.id == active_subsection %}show{% endif %}" 
+                                                             aria-labelledby="subsection-heading-{{ subsection.id }}" 
+                                                             data-bs-parent="#subsectionsAccordion-{{ section.id }}">
+                                                            <div class="accordion-body">
+                                                                <!-- Список QA внутри подраздела -->
+                                                                <div class="list-group mb-3">
+                                                                    {% for qa in subsection.qa_items.all %}
+                                                                    <a href="{% url 'content:qa_detail' pk=qa.id %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" data-id="{{ qa.id }}">
+                                                                        <span>{{ qa.question }}</span>
+                                                                        <span class="badge bg-{% if qa.status == qa.STATUS_PUBLISHED %}success{% elif qa.status == qa.STATUS_IN_REVIEW %}warning{% elif qa.status == qa.STATUS_REJECTED %}danger{% else %}secondary{% endif %} rounded-pill">
+                                                                            {{ qa.get_status_display }}
+                                                                        </span>
+                                                                    </a>
+                                                                    {% empty %}
+                                                                    <div class="alert alert-info mb-0">Нет вопросов-ответов в этом подразделе</div>
+                                                                    {% endfor %}
+                                                                </div>
+                                                                <button class="btn btn-primary w-100 add-qa" data-subsection="{{ subsection.id }}">
+                                                                    <i class="bi bi-plus-circle"></i> Добавить вопрос-ответ
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    {% empty %}
+                                                    <div class="alert alert-info">Нет подразделов в этом разделе</div>
+                                                    {% endfor %}
+                                                    
+                                                    <button class="btn btn-outline-success mt-3 w-100 add-subsection" data-section="{{ section.id }}">
+                                                        <i class="bi bi-plus-circle"></i> Добавить подраздел
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% empty %}
+                                    <div class="alert alert-info">Нет разделов в этой главе</div>
+                                    {% endfor %}
+                                    
+                                    <button class="btn btn-outline-primary mt-3 w-100 add-section" data-chapter="{{ chapter.id }}">
+                                        <i class="bi bi-plus-circle"></i> Добавить раздел
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="alert alert-info">Нет глав в системе</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add this somewhere in your dashboard template where appropriate -->
+
+{% if active_subsection_id %}
+<div class="d-flex justify-content-between mb-3">
+    <h3>Вопрос-ответы</h3>
+    <a href="{% url 'content:qa_create' %}?subsection_id={{ active_subsection_id }}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Создать вопрос-ответ
+    </a>
+</div>
+{% endif %}
+
+<!-- Then later where you display the QA items -->
+{% if active_qa_items %}
+<div class="list-group">
+    {% for qa in active_qa_items %}
+    <a href="{% url 'content:qa_detail' pk=qa.id %}" class="list-group-item list-group-item-action">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-1">{{ qa.question }}</h5>
+            <span class="badge bg-{% if qa.status == qa.STATUS_PUBLISHED %}success{% elif qa.status == qa.STATUS_IN_REVIEW %}warning{% else %}secondary{% endif %}">
+                {% if qa.status == qa.STATUS_PUBLISHED %}Опубликован{% elif qa.status == qa.STATUS_IN_REVIEW %}На проверке{% else %}Черновик{% endif %}
+            </span>
+        </div>
+        <p class="mb-1 text-truncate">{{ qa.answer|truncatechars:150 }}</p>
+        <small>Автор: {{ qa.author.get_full_name }} | Создан: {{ qa.created_at|date:"d.m.Y" }}</small>
+    </a>
+    {% endfor %}
+</div>
+{% else %}
+<div class="alert alert-info">
+    В этом подразделе пока нет вопрос-ответов.
+    <a href="{% url 'content:qa_create' %}?subsection_id={{ active_subsection_id }}" class="alert-link">Создать новый?</a>
+</div>
+{% endif %}
+
+<!-- Chapter Creation Modal -->
+<div class="modal fade" id="createChapterModal" tabindex="-1" aria-labelledby="createChapterModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="createChapterModalLabel">Создание новой главы</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createChapterForm" method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="chapterTitle" class="form-label">Название главы</label>
+                        <input type="text" class="form-control" id="chapterTitle" name="title" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="chapterDescription" class="form-label">Описание</label>
+                        <textarea class="form-control" id="chapterDescription" name="description" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="chapterOrder" class="form-label">Порядок</label>
+                        <input type="number" class="form-control" id="chapterOrder" name="order" value="0">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" id="submitChapter">Создать главу</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Section Creation Modal -->
+<div class="modal fade" id="createSectionModal" tabindex="-1" aria-labelledby="createSectionModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="createSectionModalLabel">Создание нового раздела</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createSectionForm" method="post">
+                    {% csrf_token %}
+                    <input type="hidden" id="sectionChapterId" name="chapter_id">
+                    <div class="mb-3">
+                        <label for="sectionTitle" class="form-label">Название раздела</label>
+                        <input type="text" class="form-control" id="sectionTitle" name="title" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="sectionDescription" class="form-label">Описание</label>
+                        <textarea class="form-control" id="sectionDescription" name="description" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="sectionOrder" class="form-label">Порядок</label>
+                        <input type="number" class="form-control" id="sectionOrder" name="order" value="0">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-success" id="submitSection">Создать раздел</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Subsection Creation Modal -->
+<div class="modal fade" id="createSubsectionModal" tabindex="-1" aria-labelledby="createSubsectionModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title" id="createSubsectionModalLabel">Создание нового подраздела</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createSubsectionForm" method="post">
+                    {% csrf_token %}
+                    <input type="hidden" id="subsectionSectionId" name="section_id">
+                    <div class="mb-3">
+                        <label for="subsectionTitle" class="form-label">Название подраздела</label>
+                        <input type="text" class="form-control" id="subsectionTitle" name="title" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="subsectionDescription" class="form-label">Описание</label>
+                        <textarea class="form-control" id="subsectionDescription" name="description" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="subsectionOrder" class="form-label">Порядок</label>
+                        <input type="number" class="form-control" id="subsectionOrder" name="order" value="0">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-warning" id="submitSubsection">Создать подраздел</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- QA Creation Modal -->
+<div class="modal fade" id="createQAModal" tabindex="-1" aria-labelledby="createQAModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="createQAModalLabel">Создание нового вопроса-ответа</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createQAForm" method="post">
+                    {% csrf_token %}
+                    <input type="hidden" id="qaSubsectionId" name="subsection_id">
+                    <div class="mb-3">
+                        <label for="qaTitle" class="form-label">Вопрос</label>
+                        <input type="text" class="form-control" id="qaTitle" name="title" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="qaContent" class="form-label">Ответ</label>
+                        <textarea class="form-control" id="qaContent" name="content" rows="10" required></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" id="submitQA">Создать вопрос-ответ</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Update the chapter items to support right-click -->
+{% for chapter in chapters %}
+    <a href="?chapter={{ chapter.id }}" 
+       class="list-group-item list-group-item-action content-item {% if chapter.id == active_chapter_id %}active{% endif %}"
+       data-type="chapter" 
+       data-id="{{ chapter.id }}"
+       data-can-edit="{% if chapter.author.id == request.user.id or user.is_content_admin %}true{% else %}false{% endif %}"
+       data-can-delete="{% if user.is_content_admin %}true{% else %}false{% endif %}">
+        {{ chapter.title }}
+    </a>
+{% empty %}
+    <div class="list-group-item">Нет глав</div>
+{% endfor %}
+
+<!-- Update section items to support right-click -->
+{% for section in active_sections %}
+    <a href="?chapter={{ active_chapter_id }}&section={{ section.id }}" 
+       class="list-group-item list-group-item-action content-item {% if section.id == active_section_id %}active{% endif %}"
+       data-type="section" 
+       data-id="{{ section.id }}"
+       data-can-edit="{% if section.author.id == request.user.id or user.is_content_admin %}true{% else %}false{% endif %}"
+       data-can-delete="{% if user.is_content_admin %}true{% else %}false{% endif %}">
+        {{ section.title }}
+    </a>
+{% endfor %}
+
+<!-- Update subsection items to support right-click -->
+{% for subsection in active_subsections %}
+    <a href="?chapter={{ active_chapter_id }}&section={{ active_section_id }}&subsection={{ subsection.id }}" 
+       class="list-group-item list-group-item-action content-item {% if subsection.id == active_subsection_id %}active{% endif %}"
+       data-type="subsection" 
+       data-id="{{ subsection.id }}"
+       data-can-edit="{% if subsection.author.id == request.user.id or user.is_content_admin %}true{% else %}false{% endif %}"
+       data-can-delete="{% if user.is_content_admin %}true{% else %}false{% endif %}">
+        {{ subsection.title }}
+    </a>
+{% endfor %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/dashboard.js' %}"></script>
+{% endblock %}

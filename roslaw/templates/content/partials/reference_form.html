@@ -1,0 +1,14 @@
+<div class="reference-item mb-3 card p-3" data-index="{{ index }}">
+    <div class="d-flex justify-content-between mb-2">
+        <span>{{ index }}.</span>
+        <button type="button" class="btn-close remove-reference" aria-label="Close"></button>
+    </div>
+    <div class="mb-2">
+        <label for="reference_description_{{ index }}" class="form-label">Описание:</label>
+        <input type="text" class="form-control" id="reference_description_{{ index }}" name="reference_description_{{ index }}">
+    </div>
+    <div>
+        <label for="reference_url_{{ index }}" class="form-label">Источник:</label>
+        <input type="url" class="form-control" id="reference_url_{{ index }}" name="reference_url_{{ index }}" placeholder="https://...">
+    </div>
+</div>

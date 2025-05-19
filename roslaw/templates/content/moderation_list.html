@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+
+{% block title %}Content Moderation{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Очередь модерации</h1>
+    
+    <div class="card mb-4">
+        <div class="card-header">
+            Контент на проверке ({{ item_count }})
+        </div>
+        <div class="card-body">
+            {% if items_with_type %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Название</th>
+                                <th>Автор</th>
+                                <th>Дата создания</th>
+                                <th>Тип</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for entry in items_with_type %}
+                            {% with item=entry.item %}
+                            <tr>
+                                <td>
+                                    {% if item.title %}
+                                        {{ item.title }}
+                                    {% elif item.name %}
+                                        {{ item.name }}
+                                    {% elif item.subject %}
+                                        {{ item.subject }}
+                                    {% elif item.question %}
+                                        {{ item.question }}
+                                    {% else %}
+                                        [Без названия]
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if item.author %}
+                                        {{ item.author }}
+                                    {% elif item.user %}
+                                        {{ item.user }}
+                                    {% elif item.created_by %}
+                                        {{ item.created_by }}
+                                    {% else %}
+                                        Аноним
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if item.created_at %}
+                                        {{ item.created_at|date:"d.m.Y H:i" }}
+                                    {% elif item.created %}
+                                        {{ item.created|date:"d.m.Y H:i" }}
+                                    {% elif item.date %}
+                                        {{ item.date|date:"d.m.Y H:i" }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td>{{ entry.model_name }}</td>
+                                <td>
+                                    <a href="#" class="btn btn-sm btn-primary">
+                                        Просмотреть
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endwith %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    На данный момент контент, ожидающий модерации, отсутствует.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if user.is_superuser %}
+    <!-- Debug information for superadmins only -->
+    <div class="card mt-3">
+        <div class="card-header bg-secondary text-white">
+            Отладочная информация
+        </div>
+        <div class="card-body">
+            <p><strong>Проверенные приложения:</strong> {{ debug.apps_checked|join:", " }}</p>
+            <p><strong>Проверенные модели:</strong> {{ debug.models_checked|join:", " }}</p>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

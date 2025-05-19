@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <!-- ...existing code... -->
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/">ROS Law Admin</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    {% if user.is_authenticated %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'content:dashboard' %}">Главная</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'content:qa_create' %}">Создать пост</a>
+                    </li>
+                    {% if user.role == 'moderator' or user.role == 'admin' or user.role == 'curator' or user.is_staff %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'content:qa_moderation' %}">Модерация</a>
+                    </li>
+                    {% endif %}
+                    {% endif %}
+                </ul>
+                
+                <ul class="navbar-nav">
+                    {% if user.is_authenticated %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="notificationDropdown" role="button" 
+                           data-bs-toggle="dropdown" aria-expanded="false">
+                            Уведомления 
+                            {% if unread_notifications %}
+                            <span class="badge bg-danger">{{ unread_notifications }}</span>
+                            {% endif %}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="notificationDropdown">
+                            {% if user.notifications.all %}
+                                {% for notification in user.notifications.all|slice:":5" %}
+                                <li>
+                                    <a class="dropdown-item {% if not notification.is_read %}fw-bold{% endif %}" 
+                                       href="{% url 'notifications:mark_read' notification.id %}">
+                                        {{ notification.message }}
+                                        <small class="text-muted d-block">{{ notification.created_at|date:"d.m.Y H:i" }}</small>
+                                    </a>
+                                </li>
+                                {% endfor %}
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="{% url 'notifications:list' %}">Все уведомления</a></li>
+                            {% else %}
+                                <li><span class="dropdown-item">Нет уведомлений</span></li>
+                            {% endif %}
+                        </ul>
+                    </li>
+                    
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" 
+                           data-bs-toggle="dropdown" aria-expanded="false">
+                            {{ user.get_full_name|default:user.username }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                            <li><a class="dropdown-item" href="{% url 'accounts:profile' %}">Профиль</a></li>
+                            <li><a class="dropdown-item" href="{% url 'content:user_qa_list' %}">Мои публикации</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{% url 'accounts:logout' %}">Выход</a></li>
+                        </ul>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'accounts:login' %}">Вход</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'accounts:register' %}">Регистрация</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- ...existing code... -->
+</body>
+</html>

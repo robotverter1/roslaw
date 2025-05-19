@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Вопрос-ответ: {{ qa.question }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Просмотр вопрос-ответа</h1>
+    
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Вопрос-ответ</h5>
+                        <div>
+                            <span class="badge bg-secondary">Код: {{ qa.id }}</span>
+                            <span class="badge bg-info">Тип: Вопрос-ответ</span>
+                            <span class="badge bg-{% if qa.status == qa.STATUS_PUBLISHED %}success{% elif qa.status == qa.STATUS_IN_REVIEW %}warning{% else %}secondary{% endif %}">
+                                Режим: {% if qa.status == qa.STATUS_PUBLISHED %}Просмотр{% elif qa.status == qa.STATUS_IN_REVIEW %}На проверке{% else %}Черновик{% endif %}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Question -->
+                    <div class="mb-4">
+                        <h5>Вопрос:</h5>
+                        <p class="form-control bg-light py-2 px-3">{{ qa.question }}</p>
+                    </div>
+                    
+                    <!-- Answer -->
+                    <div class="mb-4">
+                        <h5>Ответ:</h5>
+                        <div class="form-control bg-light py-2 px-3" style="min-height: 150px;">{{ qa.answer }}</div>
+                    </div>
+                    
+                    <!-- References section -->
+                    <h5 class="mb-3">Ссылки ({{ references|length }} / {{ qa.max_links }})</h5>
+                    <div id="references-container">
+                        {% for reference in references %}
+                            <div class="reference-item mb-3 card p-3">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>{{ forloop.counter }}.</span>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label">Описание:</label>
+                                    <p class="form-control bg-light">{{ reference.description }}</p>
+                                </div>
+                                <div>
+                                    <label class="form-label">Источник:</label>
+                                    <p class="form-control bg-light">
+                                        <a href="{{ reference.url }}" target="_blank">{{ reference.url }}</a>
+                                    </p>
+                                </div>
+                            </div>
+                        {% empty %}
+                            <p class="text-muted">Нет добавленных ссылок</p>
+                        {% endfor %}
+                    </div>
+                    
+                    <!-- Action buttons -->
+                    <div class="d-flex justify-content-between mt-4">
+                        {% if user == qa.author or user.is_content_admin %}
+                            <a href="{% url 'content:qa_edit' pk=qa.id %}" class="btn btn-outline-primary">Редактировать</a>
+                        {% else %}
+                            <span></span>
+                        {% endif %}
+                        
+                        <div>
+                            {% if qa.status == "draft" and user == qa.author %}
+                                <form method="post" action="{% url 'content:qa_send_to_review' pk=qa.id %}" class="d-inline-block">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-primary">На проверку</button>
+                                </form>
+                            {% endif %}
+                            
+                            {% if qa.status == qa.STATUS_IN_REVIEW and user.is_content_admin or user.is_moderator %}
+                                <form method="post" action="{% url 'content:qa_review_action' pk=qa.id %}" class="d-inline-block">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="approve">
+                                    <button type="submit" class="btn btn-success">Одобрить</button>
+                                </form>
+                                
+                                <form method="post" action="{% url 'content:qa_review_action' pk=qa.id %}" class="d-inline-block ml-2">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="reject">
+                                    <button type="submit" class="btn btn-danger">Отклонить</button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sidebar with navigation and context info -->
+        <div class="col-md-4">
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0">Информация</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Автор:</strong> {{ qa.author.get_full_name }}</p>
+                    <p><strong>Создан:</strong> {{ qa.created_at|date:"d.m.Y H:i" }}</p>
+                    <p><strong>Статус:</strong> 
+                        <span class="badge bg-{% if qa.status == qa.STATUS_PUBLISHED %}success{% elif qa.status == qa.STATUS_IN_REVIEW %}warning{% else %}secondary{% endif %}">
+                            {% if qa.status == qa.STATUS_PUBLISHED %}Опубликован{% elif qa.status == qa.STATUS_IN_REVIEW %}На проверке{% else %}Черновик{% endif %}
+                        </span>
+                    </p>
+                    
+                    {% if selected_subsection %}
+                    <p><strong>Расположение:</strong><br>
+                       {{ selected_chapter.title }} > {{ selected_section.title }} > {{ selected_subsection.title }}
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Навигация</h5>
+                </div>
+                <div class="card-body">
+                    <nav>
+                        <ul class="list-unstyled">
+                            <li><a href="{% url 'content:dashboard' %}">← Вернуться к разделам</a></li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

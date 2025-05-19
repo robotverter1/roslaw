@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block title %}Вопросы-Ответы на модерации{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Вопросы-Ответы на модерации</h1>
+    
+    <div class="card mb-4">
+        <div class="card-header bg-warning text-dark">
+            <i class="bi bi-question-circle me-2"></i> Ожидают рассмотрения
+        </div>
+        <div class="card-body">
+            {% if items %}
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Вопрос</th>
+                            <th>Автор</th>
+                            <th>Дата создания</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in items %}
+                        <tr>
+                            <td>{{ item.question|truncatechars:60 }}</td>
+                            <td>{{ item.author.get_full_name|default:item.author.username }}</td>
+                            <td>{{ item.created_at|date:"d.m.Y H:i" }}</td>
+                            <td>
+                                <a href="{% url 'content:qa_detail' pk=item.id %}" class="btn btn-sm btn-primary">Просмотр</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <div class="alert alert-info">Нет вопрос-ответов, ожидающих модерации.</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

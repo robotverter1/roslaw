@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple Moderation View</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .item { border: 1px solid #ccc; margin-bottom: 10px; padding: 10px; }
+        h1 { color: #333; }
+    </style>
+</head>
+<body>
+    <h1>Простая страница модерации</h1>
+    
+    <p>Найдено элементов: <strong>{{ all_qa_items|length }}</strong></p>
+    
+    {% if all_qa_items %}
+        {% for item in all_qa_items %}
+            <div class="item">
+                <h3>{{ item.id }}: {{ item.question }}</h3>
+                <p><strong>Статус:</strong> {{ item.status }}</p>
+                <p><strong>Автор:</strong> {{ item.author.username }}</p>
+                <p><strong>Создано:</strong> {{ item.created_at }}</p>
+                <a href="/moderation/{{ item.id }}/">Просмотреть</a>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>Элементов не найдено.</p>
+    {% endif %}
+</body>
+</html>

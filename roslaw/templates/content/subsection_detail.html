@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'content:dashboard' %}">Главная</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'content:chapter_detail' chapter.id %}">{{ chapter.title }}</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'content:section_detail' section.id %}">{{ section.title }}</a></li>
+            <li class="breadcrumb-item active">{{ subsection.title }}</li>
+        </ol>
+    </nav>
+    
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">{{ subsection.title }}</h4>
+            <div>
+                {% if can_edit %}
+                <a href="{% url 'content:subsection_edit' subsection.id %}" class="btn btn-light btn-sm">
+                    <i class="fas fa-edit"></i> Редактировать
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="mb-4">
+                <h5>Информация:</h5>
+                <p><strong>Автор:</strong> {{ subsection.author.get_full_name|default:subsection.author.username }}</p>
+                <p><strong>Создано:</strong> {{ subsection.created_at|date:"d.m.Y H:i" }}</p>
+                <p><strong>Порядок:</strong> {{ subsection.order }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Display QA items in the subsection -->
+    <div class="card">
+        <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">Вопрос-Ответы</h4>
+            <a href="{% url 'content:qa_create' %}?subsection={{ subsection.id }}" class="btn btn-light btn-sm">
+                <i class="fas fa-plus"></i> Добавить вопрос-ответ
+            </a>
+        </div>
+        <div class="card-body">
+            {% if qa_items %}
+                <div class="accordion" id="qaAccordion">
+                    {% for qa in qa_items %}
+                        <div class="card mb-2 content-item"
+                             data-type="qa"
+                             data-id="{{ qa.id }}"
+                             data-can-edit="{% if qa.author.id == request.user.id or is_admin %}true{% else %}false{% endif %}"
+                             data-can-delete="{% if qa.author.id == request.user.id or is_admin %}true{% else %}false{% endif %}">
+                            <div class="card-header" id="heading{{ qa.id }}">
+                                <h5 class="mb-0">
+                                    <button class="btn btn-link" type="button" data-toggle="collapse" 
+                                            data-target="#collapse{{ qa.id }}" aria-expanded="false" 
+                                            aria-controls="collapse{{ qa.id }}">
+                                        {{ qa.question }}
+                                    </button>
+                                    <span class="badge badge-{% if qa.status == 'published' %}success{% elif qa.status == 'pending' or qa.status == 'review' %}warning{% else %}secondary{% endif %} float-right">
+                                        {{ qa.get_status_display|default:qa.status }}
+                                    </span>
+                                </h5>
+                            </div>
+                            <div id="collapse{{ qa.id }}" class="collapse" aria-labelledby="heading{{ qa.id }}" data-parent="#qaAccordion">
+                                <div class="card-body">
+                                    {{ qa.answer|linebreaks }}
+                                    
+                                    <div class="mt-3 text-right">
+                                        <a href="{% url 'content:qa_detail' qa.id %}" class="btn btn-sm btn-info">
+                                            <i class="fas fa-eye"></i> Подробнее
+                                        </a>
+                                        {% if qa.author == request.user or is_admin %}
+                                            <a href="{% url 'content:qa_edit' qa.id %}" class="btn btn-sm btn-primary">
+                                                <i class="fas fa-edit"></i> Редактировать
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i> В этом подразделе пока нет вопрос-ответов.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

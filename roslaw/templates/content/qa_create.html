@@ -1,0 +1,270 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Создание вопрос-ответа{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Создание вопрос-ответа</h1>
+    
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Форма создания</h5>
+                        <div>
+                            <span class="badge bg-secondary">Код: {% if selected_subsection %}{{ selected_subsection.id }}{% else %}---{% endif %}</span>
+                            <span class="badge bg-info">Тип: Вопрос-ответ</span>
+                            <span class="badge bg-warning">Режим: Создание</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="qa-form">
+                        {% csrf_token %}
+                        
+                        <!-- Subsection selection (hidden if already selected) -->
+                        {% if selected_subsection %}
+                            <input type="hidden" name="subsection_id" value="{{ selected_subsection.id }}">
+                        {% else %}
+                            <div class="mb-3">
+                                <label for="subsection_select" class="form-label">Выберите подраздел:</label>
+                                <select class="form-select" id="subsection_select" name="subsection_id" required>
+                                    <option value="">Выберите подраздел</option>
+                                    {% for chapter in chapters %}
+                                        <optgroup label="{{ chapter.title }}">
+                                            {% for section in chapter.sections.all %}
+                                                {% for subsection in section.subsections.all %}
+                                                    <option value="{{ subsection.id }}">{{ chapter.title }} > {{ section.title }} > {{ subsection.title }}</option>
+                                                {% endfor %}
+                                            {% endfor %}
+                                        </optgroup>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        {% endif %}
+                        
+                        <!-- Question field -->
+                        <div class="mb-3">
+                            <label for="question_field" class="form-label">Вопрос:</label>
+                            <input type="text" class="form-control" id="question_field" name="question" placeholder="Введите вопрос" required maxlength="100">
+                        </div>
+                        
+                        <!-- Answer field -->
+                        <div class="mb-3">
+                            <label for="answer_field" class="form-label">Ответ:</label>
+                            <textarea class="form-control" id="answer_field" name="answer" rows="5" placeholder="Введите ответ" required maxlength="3000"></textarea>
+                        </div>
+                        
+                        <!-- References section -->
+                        <h5 class="mb-3">Ссылки (1 / {{ max_links }})</h5>
+                        <div id="references-container">
+                            <div class="reference-item mb-3 card p-3" data-index="1">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>1.</span>
+                                    <button type="button" class="btn-close remove-reference" aria-label="Close"></button>
+                                </div>
+                                <div class="mb-2">
+                                    <label for="reference_description_1" class="form-label">Описание:</label>
+                                    <input type="text" class="form-control" id="reference_description_1" name="reference_description_1">
+                                </div>
+                                <div>
+                                    <label for="reference_url_1" class="form-label">Источник:</label>
+                                    <input type="url" class="form-control" id="reference_url_1" name="reference_url_1" placeholder="https://...">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <input type="hidden" name="reference_count" id="reference_count" value="1">
+                        
+                        <!-- Add reference button -->
+                        <div class="mb-4 text-center">
+                            <button type="button" class="btn btn-outline-secondary btn-sm" id="add-reference-btn" {% if max_links <= 1 %}disabled{% endif %}>
+                                <i class="fas fa-plus"></i> Добавить ссылку
+                            </button>
+                        </div>
+                        
+                        <!-- Action buttons -->
+                        <div class="d-flex justify-content-between">
+                            <button type="submit" name="submit_review" class="btn btn-primary">На проверку</button>
+                            <div>
+                                <button type="button" id="cancel-btn" class="btn btn-secondary me-2">Отмена</button>
+                                <button type="submit" name="submit_draft" class="btn btn-outline-dark">Черновик</button>
+                            </div>
+                        </div>
+                    </form>
+                    
+                    <!-- Cancel form (for redirection) -->
+                    <form id="cancel-form" action="{% url 'content:qa_cancel_create' %}" method="post" style="display: none;">
+                        {% csrf_token %}
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sidebar with navigation and context info -->
+        <div class="col-md-4">
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0">Навигация</h5>
+                </div>
+                <div class="card-body">
+                    <nav>
+                        <ul class="list-unstyled">
+                            <li><a href="{% url 'content:dashboard' %}">← Вернуться к разделам</a></li>
+                            {% if selected_subsection %}
+                                <li class="mt-2">
+                                    <strong>Выбранный подраздел:</strong><br>
+                                    {{ selected_chapter.title }} > {{ selected_section.title }} > {{ selected_subsection.title }}
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Расположение</h5>
+                </div>
+                <div class="card-body">
+                    <p>
+                        <span class="d-block">Количество копий:</span>
+                        <select class="form-select mt-2" id="copy_count" name="copy_count">
+                            <option value="1" selected>1</option>
+                        </select>
+                    </p>
+                    <p class="mt-3">
+                        <span class="d-block">Расположение 1:</span>
+                        <select class="form-select mt-2" disabled>
+                            <option>4. Жилищное право > 4.2. Приватизация > 4.2.2. Выселение > 4.2.2.1. Могут ли высел...</option>
+                        </select>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // Handle reference addition
+        const maxLinks = {{ max_links }};
+        let referenceCount = 1;
+        
+        $('#add-reference-btn').click(function() {
+            if (referenceCount >= maxLinks) {
+                alert(`Максимальное количество ссылок: ${maxLinks}`);
+                return;
+            }
+            
+            referenceCount++;
+            
+            $.ajax({
+                url: '{% url "content:qa_create" %}',
+                type: 'POST',
+                data: {
+                    'action': 'add_reference',
+                    'index': referenceCount,
+                    'csrfmiddlewaretoken': '{{ csrf_token }}'
+                },
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                success: function(data) {
+                    if (data.success) {
+                        $('#references-container').append(data.html);
+                        $('#reference_count').val(referenceCount);
+                        
+                        // Update the header text
+                        $('h5.mb-3').text(`Ссылки (${referenceCount} / ${maxLinks})`);
+                        
+                        // Disable add button if max reached
+                        if (referenceCount >= maxLinks) {
+                            $('#add-reference-btn').prop('disabled', true);
+                        }
+                    }
+                }
+            });
+        });
+        
+        // Handle reference removal
+        $('#references-container').on('click', '.remove-reference', function() {
+            if (referenceCount <= 1) {
+                alert("Должна быть хотя бы одна ссылка");
+                return;
+            }
+            
+            $(this).closest('.reference-item').remove();
+            referenceCount--;
+            
+            // Update indices
+            $('.reference-item').each(function(index) {
+                const newIndex = index + 1;
+                $(this).attr('data-index', newIndex);
+                $(this).find('span:first').text(newIndex + '.');
+                
+                // Update input names and IDs
+                $(this).find('input').each(function() {
+                    const oldName = $(this).attr('name');
+                    const newName = oldName.replace(/\d+$/, newIndex);
+                    $(this).attr('name', newName);
+                    $(this).attr('id', newName);
+                });
+                
+                // Update labels
+                $(this).find('label').each(function() {
+                    const oldFor = $(this).attr('for');
+                    const newFor = oldFor.replace(/\d+$/, newIndex);
+                    $(this).attr('for', newFor);
+                });
+            });
+            
+            $('#reference_count').val(referenceCount);
+            $('h5.mb-3').text(`Ссылки (${referenceCount} / ${maxLinks})`);
+            
+            // Enable add button if below max
+            if (referenceCount < maxLinks) {
+                $('#add-reference-btn').prop('disabled', false);
+            }
+        });
+        
+        // Handle cancel button
+        $('#cancel-btn').click(function() {
+            if (confirm('Вы уверены, что хотите отменить создание вопрос-ответа?')) {
+                $('#cancel-form').submit();
+            }
+        });
+        
+        // Form validation before submission
+        $('#qa-form').submit(function(e) {
+            const question = $('#question_field').val().trim();
+            const answer = $('#answer_field').val().trim();
+            const subsection = $('#subsection_select').val() || $('input[name="subsection_id"]').val();
+            
+            if (!question) {
+                e.preventDefault();
+                alert('Пожалуйста, введите вопрос');
+                return false;
+            }
+            
+            if (!answer) {
+                e.preventDefault();
+                alert('Пожалуйста, введите ответ');
+                return false;
+            }
+            
+            if (!subsection) {
+                e.preventDefault();
+                alert('Пожалуйста, выберите подраздел');
+                return false;
+            }
+            
+            return true;
+        });
+    });
+</script>
+{% endblock %}

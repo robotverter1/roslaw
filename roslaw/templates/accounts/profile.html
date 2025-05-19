@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Профиль - РосЛоуБот{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-4">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">Профиль пользователя</h4>
+            </div>
+            <div class="card-body text-center">
+                <img src="{% static 'img/default_profile.jpg' %}" alt="{{ user.get_full_name }}" class="img-fluid rounded-circle mb-3" style="max-width: 150px;">
+                <h3>{{ user.last_name }} {{ user.first_name }}</h3>
+                <p class="text-muted">{{ user.position }}</p>
+                
+                <div class="d-grid gap-2 mt-3">
+                    <a href="{% url 'accounts:password_change' %}" class="btn btn-outline-primary">
+                        <i class="bi bi-key"></i> Изменить пароль
+                    </a>
+                    <a href="{% url 'accounts:edit_profile' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-pencil"></i> Редактировать профиль
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">Информация о пользователе</h4>
+            </div>
+            <div class="card-body">
+                <table class="table">
+                    <tbody>
+                        <tr>
+                            <th style="width: 30%">ФИО:</th>
+                            <td>{{ user.last_name }} {{ user.first_name }} {{ user.patronymic }}</td>
+                        </tr>
+                        <tr>
+                            <th>Имя пользователя:</th>
+                            <td>{{ user.username }}</td>
+                        </tr>
+                        <tr>
+                            <th>Email:</th>
+                            <td>{{ user.email }}</td>
+                        </tr>
+                        <tr>
+                            <th>Должность:</th>
+                            <td>{{ user.position }}</td>
+                        </tr>
+                        <tr>
+                            <th>Дата регистрации:</th>
+                            <td>{{ user.date_joined|date:"d F Y" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Роль:</th>
+                            <td>
+                                {% if user.is_superuser %}
+                                    Суперадминистратор
+                                {% elif user.role == 'admin' %}
+                                    Администратор
+                                {% elif user.role == 'moderator' %}
+                                    Модератор
+                                {% elif user.role == 'editor' %}
+                                    Редактор
+                                {% else %}
+                                    Пользователь
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <div class="mt-4">
+                    <h5>Статистика:</h5>
+                    <div class="row mt-3">
+                        <div class="col-md-4">
+                            <div class="card bg-success text-white">
+                                <div class="card-body text-center">
+                                    <h3>{{ published_count|default:0 }}</h3>
+                                    <p class="mb-0">Опубликовано</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-warning text-dark">
+                                <div class="card-body text-center">
+                                    <h3>{{ in_review_count|default:0 }}</h3>
+                                    <p class="mb-0">На модерации</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-danger text-white">
+                                <div class="card-body text-center">
+                                    <h3>{{ rejected_count|default:0 }}</h3>
+                                    <p class="mb-0">Отклонено</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

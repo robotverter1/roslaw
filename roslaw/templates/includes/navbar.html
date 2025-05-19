@@ -1,0 +1,15 @@
+<!-- Moderation menu item - updating the link -->
+<li class="nav-item">
+  <a class="nav-link" href="{% url 'content:moderation' %}">
+    <i class="bi bi-shield-check"></i> Модерация
+  </a>
+</li>
+<!-- Create post button - adding qa/create link -->
+<li class="nav-item dropdown">
+    <a class="nav-link dropdown-toggle" href="#" id="createPostDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        Создать пост
+    </a>
+    <div class="dropdown-menu" aria-labelledby="createPostDropdown">
+        <a class="dropdown-item" href="{% url 'qa:create' %}">Создать вопрос</a>
+    </div>
+</li>

@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block title %}Review Article{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Review Article</h1>
+    
+    <div class="card mb-4">
+        <div class="card-header">
+            {{ article.title }}
+        </div>
+        <div class="card-body">
+            <h6 class="text-muted">By {{ article.author }} on {{ article.created_at|date:"d.m.Y H:i" }}</h6>
+            
+            <div class="content-preview mt-4">
+                {{ article.content|safe }}
+            </div>
+            
+            <form method="post" class="mt-4">
+                {% csrf_token %}
+                <div class="btn-group" role="group">
+                    <button type="submit" name="action" value="approve" class="btn btn-success">Approve</button>
+                    <button type="submit" name="action" value="reject" class="btn btn-danger">Reject</button>
+                </div>
+                <a href="{% url 'content:moderation' %}" class="btn btn-secondary ml-2">Back to List</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

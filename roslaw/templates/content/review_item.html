@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+
+{% block title %}Review Content{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header d-flex justify-content-between">
+            <h3>{{ item.title }}</h3>
+            <div>
+                <a href="{% url 'content:moderation' %}" class="btn btn-secondary">Назад к списку</a>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="mb-3">
+                <h6>Автор:</h6>
+                <p>
+                    {% if item.author %}
+                        {{ item.author }}
+                    {% elif item.user %}
+                        {{ item.user }}
+                    {% else %}
+                        Аноним
+                    {% endif %}
+                </p>
+            </div>
+            
+            <div class="mb-3">
+                <h6>Дата создания:</h6>
+                <p>{{ item.created_at|date:"d.m.Y H:i" }}</p>
+            </div>
+            
+            <div class="mb-3">
+                <h6>Содержимое:</h6>
+                <div class="content-preview p-3 border rounded">
+                    {% if item.content %}
+                        {{ item.content|safe }}
+                    {% elif item.body %}
+                        {{ item.body|safe }}
+                    {% elif item.text %}
+                        {{ item.text|safe }}
+                    {% else %}
+                        <p class="text-muted">Содержимое не доступно</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="mt-4 d-flex justify-content-end">
+                <div class="btn-group">
+                    <button class="btn btn-success" onclick="approveItem({{ item.id }})">Одобрить</button>
+                    <button class="btn btn-danger" onclick="rejectItem({{ item.id }})">Отклонить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function approveItem(itemId) {
+        if (confirm('Вы уверены, что хотите одобрить этот материал?')) {
+            // Send AJAX request to approve
+            fetch(`/content/review/${itemId}/approve/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'Content-Type': 'application/json'
+                },
+            })
+            .then(response => {
+                if (response.ok) {
+                    window.location.href = "{% url 'content:moderation' %}";
+                }
+            });
+        }
+    }
+    
+    function rejectItem(itemId) {
+        if (confirm('Вы уверены, что хотите отклонить этот материал?')) {
+            // Send AJAX request to reject
+            fetch(`/content/review/${itemId}/reject/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'Content-Type': 'application/json'
+                },
+            })
+            .then(response => {
+                if (response.ok) {
+                    window.location.href = "{% url 'content:moderation' %}";
+                }
+            });
+        }
+    }
+    
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+</script>
+{% endblock %}
